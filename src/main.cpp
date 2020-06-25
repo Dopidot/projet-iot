@@ -5,7 +5,6 @@
 
 Ethernet WSA; // WSAStartup
 EthernetClient ethClient;
-IPAddress server(192, 168, 1, 25);
 
 #define LED_PIN 3
 
@@ -18,16 +17,21 @@ String payloadToString(byte *payload, unsigned int length)
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
-
-  String message = payloadToString(payload, length);
-  if(message.equals("Coucou"))
-  {
-    Serial.println(message);
-    digitalWrite(LED_PIN, HIGH);
+  String topicStr = String(topic);
+  if (topicStr.equals("EssaieIOT/OnOff")) {
+    String message = payloadToString(payload, length);
+    if(message.equals("on"))
+    {
+      digitalWrite(LED_PIN, HIGH);
+    } else if (message.equals("off")) {
+      digitalWrite(LED_PIN, LOW);
+    }
   }
+
+  
 }
 
-PubSubClient mqtt(server, 1883, callback, ethClient);
+PubSubClient mqtt("mqtt.flespi.io", 1883, callback, ethClient);
 
 void setup () {
   Serial.begin(115200);
@@ -46,11 +50,10 @@ void reconnect()
   while (!mqtt.connected())
   {
     Serial.println("[MQTT] Connecting to MQTT...");
-    if (mqtt.connect("MonObjectConnecte")) // Or mqtt.connect("MonObjectConnecte", "user", "pass") if you have protect the mqtt broker by credentials
+    if (mqtt.connect("MonObjectConnecte", "90xVpJU7zfbKqcH3lFUvo8oo5U5G7hg67EQmbAhBGg9UiFLu8vNnrZzmJuQFBXBw", "")) // Or mqtt.connect("MonObjectConnecte", "user", "pass") if you have protect the mqtt broker by credentials
     {
       Serial.println("[MQTT] Connected");
-      mqtt.publish("EssaieIOT", "Hello world from WizIO");
-      mqtt.subscribe("EssaieIOT");
+      mqtt.subscribe("EssaieIOT/OnOff");
     }
     else
     {
@@ -68,6 +71,12 @@ void loop() {
   }
   mqtt.loop();
 
-  int test = digitalRead(10);
-  Serial.println(test);
-}
+  delay(2000);
+
+  if (digitalRead(LED_PIN) == 0 ) {
+    mqtt.publish("EssaieIOT/SendData", "Led Off");
+  } else {
+    mqtt.publish("EssaieIOT/SendData", "Led On");
+  }
+
+ }
