@@ -7,17 +7,8 @@ Ethernet WSA; // WSAStartup
 EthernetClient ethClient;
 
 #define LED_PIN 3
-
-long localMinute = 11;
-long localSecond = 30;
-
-long openMinute = 11;
-long openSecond = 35;
-
-long closeMinute = 11;
-long closeSecond = 55;
-
-int runMotorType = 0;
+#define MOTOR_PIN_1 9
+#define MOTOR_PIN_2 10
 
 void runMotor(int runMotorType);
 
@@ -35,50 +26,50 @@ String payloadToString(byte *payload, unsigned int length)
 void callback(char *topic, byte *payload, unsigned int length)
 {
   String topicStr = String(topic);
-  if (topicStr.equals("EssaieIOT/OnOff")) {
-    String message = payloadToString(payload, length);
 
-    if(message.equals("on"))
-    {
-        mqtt.publish("EssaieIOT/SendData", "LED On");
-        digitalWrite(LED_PIN, HIGH);
-    }
-    else if (message.equals("off")) 
-    {
-        mqtt.publish("EssaieIOT/SendData", "LED Off");
-        digitalWrite(LED_PIN, LOW);
-    }
+  if (topicStr.equals("EssaieIOT/OnOff"))
+  {
+        String message = payloadToString(payload, length);
 
-    if(message.equals("open"))
-    {
-        mqtt.publish("EssaieIOT/SendData", "Ouverture du volet");
-        runMotor(1);
-    }
-    else if(message.equals("close"))
-    {
-        mqtt.publish("EssaieIOT/SendData", "Fermeture du volet");
-        runMotor(2);
-    }
+        if(message.equals("on"))
+        {
+            mqtt.publish("EssaieIOT/SendData", "LED On");
+            Serial.println("Activation des lumieres");
+            digitalWrite(LED_PIN, HIGH);
+        }
+        else if (message.equals("off")) 
+        {
+            mqtt.publish("EssaieIOT/SendData", "LED Off");
+            Serial.println("Desactivation des lumieres");
+            digitalWrite(LED_PIN, LOW);
+        }
+        else if(message.equals("open"))
+        {
+            mqtt.publish("EssaieIOT/SendData", "Ouverture du volet");
+            Serial.println("Ouverture du volet");
+            runMotor(1);
+        }
+        else if(message.equals("close"))
+        {
+            mqtt.publish("EssaieIOT/SendData", "Fermeture du volet");
+            Serial.println("Fermeture du volet");
+            runMotor(2);
+        }
   }
 
-  
 }
 
 
-void setup () {
-  Serial.begin(115200);
-  pinMode(LED_PIN, OUTPUT);
+void setup () 
+{
+    Serial.begin(115200);
+    pinMode(LED_PIN, OUTPUT);
 
+    pinMode(MOTOR_PIN_2, INPUT);
+    pinMode(MOTOR_PIN_1, INPUT);
 
-  pinMode(10, INPUT);
-  pinMode(9, INPUT);
-
-  digitalWrite(10, LOW); // MOTOR
-  digitalWrite(9, LOW); // MOTOR
-
-  //Pre
-  //digitalWrite(10, 80);
-  analogWrite(0, 80);
+    digitalWrite(MOTOR_PIN_2, LOW); // MOTOR
+    digitalWrite(MOTOR_PIN_1, LOW); // MOTOR
 }
 
 void reconnect()
@@ -104,73 +95,29 @@ void runMotor(int runMotorType)
 {
     if (runMotorType == 1) 
     {
-        digitalWrite(10, LOW);
-  		digitalWrite(9, HIGH);
+        digitalWrite(MOTOR_PIN_2, LOW);
+  		digitalWrite(MOTOR_PIN_1, HIGH);
         delay(10 * 1000);
     } 
     else if (runMotorType == 2)
     {
-        digitalWrite(10, HIGH);
-  		digitalWrite(9, LOW); 
+        digitalWrite(MOTOR_PIN_2, HIGH);
+  		digitalWrite(MOTOR_PIN_1, LOW); 
         delay(10 * 1000);
     }
 
-    digitalWrite(10, LOW);
-    digitalWrite(9, LOW);
-
-          Serial.print(millis());
-
-  	/*long elapsedTime = millis();
-  	long currentMinute = (elapsedTime / 1000 / 60) + localMinute;
-  	long currentSecond = (elapsedTime / 1000) + localSecond;
-  
-	if (currentMinute >= openMinute &&
-        currentSecond >= openSecond && currentSecond - openSecond <= 10)
-    {
-      	Serial.print(currentMinute);
-      	Serial.print(":");
-      	Serial.print(currentSecond);
-      	Serial.println(" Ouverture du volet");
-
-      	digitalWrite(10, HIGH);
-  		digitalWrite(9, LOW);
-    }
-  	else if (currentMinute >= closeMinute && 
-        currentSecond >= closeSecond && currentSecond - closeSecond < 10 )
-  	{
-		Serial.print(currentMinute);
-      	Serial.print(":");
-      	Serial.print(currentSecond);
-      	Serial.println(" Fermeture du volet");
-      
-      	digitalWrite(10, LOW);
-  		digitalWrite(9, HIGH);
-  	}
-  	else
-  	{
-      	digitalWrite(10, LOW);
-  		digitalWrite(9, LOW);
-  	}
-  
-    delay(5000);
-    mySerial.print("Coucou");
-    delay(5000);
-    mySerial.print("Goodbye");*/
+    digitalWrite(MOTOR_PIN_2, LOW);
+    digitalWrite(MOTOR_PIN_1, LOW);
 }
 
-void loop() {
+void loop() 
+{
     if (!mqtt.connected())
     {
         reconnect();
     }
+
     mqtt.loop();
 
     delay(2000);
-
-    /*if (digitalRead(LED_PIN) == 0 ) {
-        mqtt.publish("EssaieIOT/SendData", "Led Off");
-    } else {
-        mqtt.publish("EssaieIOT/SendData", "Led On");
-    }*/
-
  }
